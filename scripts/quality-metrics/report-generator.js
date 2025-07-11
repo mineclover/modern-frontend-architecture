@@ -1,5 +1,5 @@
 // 리포트 생성기
-const MetricsUtils = require('./utils')
+import MetricsUtils from './utils.js'
 
 class ReportGenerator {
   constructor(metrics) {
@@ -317,4 +317,4 @@ ${this.identifyBlockers().map(blocker => `- ❌ ${blocker}`).join('\n') || '✅ 
   }
 }
 
-module.exports = ReportGenerator
+export default ReportGenerator

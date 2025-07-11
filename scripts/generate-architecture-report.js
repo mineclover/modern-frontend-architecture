@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 
-const fs = require('fs')
-const path = require('path')
-const { checkDependencyViolations, checkCircularDependencies, checkDomainCrossReferences, checkPublicApiViolations } = require('./check-dependencies')
-const { validateDomainStructure } = require('./validate-domains')
+import fs from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
+import { checkDependencyViolations, checkCircularDependencies, checkDomainCrossReferences, checkPublicApiViolations } from './check-dependencies.js'
+import { validateDomainStructure } from './validate-domains.js'
 
 function generateArchitectureReport() {
   console.log('📊 아키텍처 리포트 생성 중...\n')
@@ -233,10 +234,12 @@ function printSummary(report) {
 }
 
 // 실행
-if (require.main === module) {
+const __filename = fileURLToPath(import.meta.url)
+
+if (process.argv[1] === __filename) {
   generateArchitectureReport()
 }
 
-module.exports = {
+export {
   generateArchitectureReport
 }

@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 
 // 품질 게이트 체커 - CI/CD에서 사용하기 위한 간단한 스크립트
-const QualityMetricsCollector = require('./quality-metrics-collector')
+import fs from 'fs'
+import { fileURLToPath } from 'url'
+import QualityMetricsCollector from './quality-metrics-collector.js'
 
 async function runQualityGate() {
   console.log('🚦 Running Quality Gate Check...\n')
@@ -11,7 +13,6 @@ async function runQualityGate() {
     await collector.collectAllMetrics()
     
     // quality-gate-decision.json 파일에서 결과 읽기
-    const fs = require('fs')
     const decision = JSON.parse(fs.readFileSync('quality-gate-decision.json', 'utf8'))
     
     console.log('\n' + '='.repeat(60))
@@ -57,8 +58,10 @@ async function runQualityGate() {
 }
 
 // 직접 실행될 때만 실행
-if (require.main === module) {
+const __filename = fileURLToPath(import.meta.url)
+
+if (process.argv[1] === __filename) {
   runQualityGate()
 }
 
-module.exports = runQualityGate
+export default runQualityGate

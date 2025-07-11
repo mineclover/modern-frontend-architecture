@@ -1,6 +1,6 @@
 // 품질 메트릭 수집 유틸리티
-const fs = require('fs')
-const { execSync } = require('child_process')
+import fs from 'fs'
+import { execSync } from 'child_process'
 
 class MetricsUtils {
   static safeExec(command, options = {}) {
@@ -86,4 +86,4 @@ class MetricsUtils {
   }
 }
 
-module.exports = MetricsUtils
+export default MetricsUtils

@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
-const fs = require('fs')
-const path = require('path')
+import fs from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
 function validateDomainStructure() {
   const domainsPath = path.join(process.cwd(), 'src', 'domain')
@@ -152,12 +153,14 @@ function extractExports(content) {
 }
 
 // 실행
-if (require.main === module) {
+const __filename = fileURLToPath(import.meta.url)
+
+if (process.argv[1] === __filename) {
   validateDomainStructure()
   validatePublicApiConsistency()
 }
 
-module.exports = {
+export {
   validateDomainStructure,
   validateSingleDomain,
   validatePublicApiConsistency

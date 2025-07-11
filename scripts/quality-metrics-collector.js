@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 
 // 메인 품질 메트릭 수집기 - 모듈화된 버전
-const ArchitectureCollector = require('./quality-metrics/architecture')
-const CodeQualityCollector = require('./quality-metrics/code-quality')
-const PerformanceCollector = require('./quality-metrics/performance')
-const SecurityCollector = require('./quality-metrics/security')
-const MaintainabilityCollector = require('./quality-metrics/maintainability')
-const ReportGenerator = require('./quality-metrics/report-generator')
+import { fileURLToPath } from 'url'
+import ArchitectureCollector from './quality-metrics/architecture.js'
+import CodeQualityCollector from './quality-metrics/code-quality.js'
+import PerformanceCollector from './quality-metrics/performance.js'
+import SecurityCollector from './quality-metrics/security.js'
+import MaintainabilityCollector from './quality-metrics/maintainability.js'
+import ReportGenerator from './quality-metrics/report-generator.js'
 
 class QualityMetricsCollector {
   constructor() {
@@ -260,8 +261,10 @@ Output:
 }
 
 // 모듈로 사용할 때와 직접 실행할 때 구분
-if (require.main === module) {
+const __filename = fileURLToPath(import.meta.url)
+
+if (process.argv[1] === __filename) {
   main().catch(console.error)
 }
 
-module.exports = QualityMetricsCollector
+export default QualityMetricsCollector

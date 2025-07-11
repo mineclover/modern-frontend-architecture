@@ -1,5 +1,5 @@
 // 보안 메트릭 수집기
-const MetricsUtils = require('./utils')
+import MetricsUtils from './utils.js'
 
 class SecurityCollector {
   async collect() {
@@ -139,4 +139,4 @@ class SecurityCollector {
   }
 }
 
-module.exports = SecurityCollector
+export default SecurityCollector

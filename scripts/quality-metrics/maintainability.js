@@ -1,5 +1,5 @@
 // 유지보수성 메트릭 수집기
-const MetricsUtils = require('./utils')
+import MetricsUtils from './utils.js'
 
 class MaintainabilityCollector {
   async collect() {
@@ -182,4 +182,4 @@ class MaintainabilityCollector {
   }
 }
 
-module.exports = MaintainabilityCollector
+export default MaintainabilityCollector

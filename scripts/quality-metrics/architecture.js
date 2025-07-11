@@ -1,5 +1,5 @@
 // 아키텍처 메트릭 수집기
-const MetricsUtils = require('./utils')
+import MetricsUtils from './utils.js'
 
 class ArchitectureCollector {
   async collect() {
@@ -89,4 +89,4 @@ class ArchitectureCollector {
   }
 }
 
-module.exports = ArchitectureCollector
+export default ArchitectureCollector

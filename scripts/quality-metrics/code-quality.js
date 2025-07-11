@@ -1,5 +1,5 @@
 // 코드 품질 메트릭 수집기
-const MetricsUtils = require('./utils')
+import MetricsUtils from './utils.js'
 
 class CodeQualityCollector {
   async collect() {
@@ -108,4 +108,4 @@ class CodeQualityCollector {
   }
 }
 
-module.exports = CodeQualityCollector
+export default CodeQualityCollector

@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
-const fs = require('fs')
-const path = require('path')
-const glob = require('glob')
+import fs from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
 // 의존성 방향 규칙 정의 (routes로 변경됨)
 const DEPENDENCY_RULES = {
@@ -25,11 +25,8 @@ function checkDependencyViolations() {
     return []
   }
 
-  // 모든 TypeScript/JavaScript 파일 찾기
-  const files = glob.sync('**/*.{ts,tsx,js,jsx}', { 
-    cwd: srcPath,
-    ignore: ['**/*.test.*', '**/*.spec.*', '**/*.d.ts', '**/.gitkeep']
-  })
+  // 모든 TypeScript/JavaScript 파일 찾기 (glob 없이 재귀적으로 찾기)
+  const files = findFiles(srcPath, /\.(ts|tsx|js|jsx)$/)
 
   files.forEach(file => {
     const filePath = path.join(srcPath, file)
@@ -83,7 +80,7 @@ function checkDomainCrossReferences() {
   
   if (!fs.existsSync(srcPath)) return []
   
-  const domainFiles = glob.sync('domain/**/*.{ts,tsx}', { cwd: srcPath })
+  const domainFiles = findFiles(path.join(srcPath, 'domain'), /\.(ts|tsx)$/)
   
   domainFiles.forEach(file => {
     const filePath = path.join(srcPath, file)
@@ -120,7 +117,7 @@ function checkPublicApiViolations() {
   
   if (!fs.existsSync(srcPath)) return []
   
-  const files = glob.sync('**/*.{ts,tsx}', { cwd: srcPath })
+  const files = findFiles(srcPath, /\.(ts|tsx)$/)
   
   files.forEach(file => {
     const filePath = path.join(srcPath, file)
@@ -218,7 +215,7 @@ function buildDependencyGraph() {
   
   if (!fs.existsSync(srcPath)) return graph
   
-  const files = glob.sync('**/*.{ts,tsx}', { cwd: srcPath })
+  const files = findFiles(srcPath, /\.(ts|tsx)$/)
   
   files.forEach(file => {
     const filePath = path.join(srcPath, file)
@@ -331,12 +328,50 @@ function generateReport() {
   }
 }
 
+// 유틸리티 함수: 파일 재귀 검색
+function findFiles(dir, pattern) {
+  const results = []
+  
+  function searchDir(currentDir, basePath = '') {
+    if (!fs.existsSync(currentDir)) return
+    
+    const entries = fs.readdirSync(currentDir, { withFileTypes: true })
+    
+    for (const entry of entries) {
+      const fullPath = path.join(currentDir, entry.name)
+      const relativePath = path.join(basePath, entry.name)
+      
+      if (entry.isDirectory()) {
+        // 테스트 파일 및 숨김 폴더 제외
+        if (!entry.name.startsWith('.') && entry.name !== 'node_modules') {
+          searchDir(fullPath, relativePath)
+        }
+      } else if (entry.isFile()) {
+        // 패턴에 맞는 파일만 포함하고 테스트 파일 제외
+        if (pattern.test(entry.name) && 
+            !entry.name.includes('.test.') && 
+            !entry.name.includes('.spec.') &&
+            !entry.name.endsWith('.d.ts') &&
+            entry.name !== '.gitkeep') {
+          results.push(relativePath.replace(/\\/g, '/'))
+        }
+      }
+    }
+  }
+  
+  searchDir(dir)
+  return results
+}
+
 // 실행
-if (require.main === module) {
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+if (process.argv[1] === __filename) {
   generateReport()
 }
 
-module.exports = {
+export {
   checkDependencyViolations,
   checkCircularDependencies,
   checkDomainCrossReferences,

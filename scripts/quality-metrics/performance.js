@@ -1,5 +1,5 @@
 // 성능 메트릭 수집기
-const MetricsUtils = require('./utils')
+import MetricsUtils from './utils.js'
 
 class PerformanceCollector {
   async collect() {
@@ -117,4 +117,4 @@ class PerformanceCollector {
   }
 }
 
-module.exports = PerformanceCollector
+export default PerformanceCollector

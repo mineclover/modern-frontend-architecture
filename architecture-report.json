@@ -1,0 +1,24 @@
+{
+  "timestamp": "2025-07-11T23:31:24.381Z",
+  "summary": {
+    "dependencyViolations": 0,
+    "circularDependencies": 0,
+    "domainViolations": 0,
+    "publicApiViolations": 0,
+    "totalIssues": 0
+  },
+  "details": {
+    "dependencyViolations": [],
+    "circularDependencies": [],
+    "domainViolations": [],
+    "publicApiViolations": []
+  },
+  "recommendations": [
+    {
+      "priority": "low",
+      "category": "optimization",
+      "title": "성능 최적화",
+      "description": "아키텍처가 우수합니다! 번들 크기 최적화와 코드 스플리팅을 검토해보세요."
+    }
+  ]
+}
