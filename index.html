@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Modern Frontend Architecture</title>
+    
+    <!-- DNS 프리페치 -->
+    <link rel="dns-prefetch" href="//api.example.com">
+    <link rel="dns-prefetch" href="//cdn.example.com">
+    
+    <!-- 중요 리소스 프리로드 -->
+    <link rel="preload" href="/fonts/main.woff2" as="font" type="font/woff2" crossorigin>
+    
+    <!-- SEO 메타 태그 -->
+    <meta name="description" content="확장 가능하고 유지보수 가능한 현대적 프론트엔드 아키텍처">
+    <meta name="keywords" content="React, TypeScript, 아키텍처, 도메인 주도 설계">
+    <meta name="author" content="Frontend Architecture Team">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="Modern Frontend Architecture">
+    <meta property="og:description" content="확장 가능하고 유지보수 가능한 현대적 프론트엔드 아키텍처">
+    <meta property="og:type" content="website">
+    
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#000000">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- 환경별 설정 -->
+    <script>
+      window.__APP_CONFIG__ = {
+        env: '%VITE_NODE_ENV%',
+        apiUrl: '%VITE_API_URL%',
+        version: '%VITE_APP_VERSION%'
+      }
+    </script>
+  </body>
+</html>
