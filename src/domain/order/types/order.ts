@@ -3,12 +3,17 @@ import { BaseEntity } from '@/common/types'
 export interface Order extends BaseEntity {
   orderNumber: string
   userId: string
+  customerName: string
+  customerEmail: string
   items: OrderItem[]
   status: OrderStatus
   paymentStatus: PaymentStatus
+  shipping: ShippingInfo
+  payment: PaymentInfo
   shippingAddress: ShippingAddress
   billingAddress?: ShippingAddress
   subtotal: number
+  shippingFee: number
   shippingCost: number
   taxAmount: number
   discountAmount: number
@@ -47,6 +52,21 @@ export interface ShippingAddress {
   city: string
   state: string
   country: string
+  street?: string
+}
+
+export interface ShippingInfo {
+  recipientName: string
+  recipientPhone: string
+  address: ShippingAddress
+  memo?: string
+  trackingNumber?: string
+  estimatedDeliveryDate?: Date
+}
+
+export interface PaymentInfo {
+  method: 'card' | 'transfer' | 'virtual_account'
+  cardNumber?: string
 }
 
 export type OrderStatus = 
@@ -78,14 +98,18 @@ export type PaymentMethod =
   | 'gift_card'         // 기프트카드
 
 export interface CreateOrderRequest {
-  items: {
-    productId: string
-    quantity: number
-    options?: OrderItemOption[]
-  }[]
-  shippingAddress: ShippingAddress
+  items: OrderItem[]
+  customerName: string
+  customerEmail: string
+  customerPhone: string
+  shipping: ShippingInfo
+  payment: PaymentInfo
+  subtotal: number
+  shippingFee: number
+  totalAmount: number
+  shippingAddress?: ShippingAddress
   billingAddress?: ShippingAddress
-  paymentMethod: PaymentMethod
+  paymentMethod?: PaymentMethod
   notes?: string
   couponCode?: string
 }

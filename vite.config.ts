@@ -21,24 +21,15 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          // 도메인별 청크 분리
-          'domain-user': ['./src/domain/user'],
-          'domain-product': ['./src/domain/product'],
-          'domain-order': ['./src/domain/order'],
-          
           // 라이브러리별 청크 분리
           vendor: ['react', 'react-dom'],
           'vendor-query': ['@tanstack/react-query'],
           'vendor-router': ['react-router-dom'],
-          
-          // 공통 모듈
-          shared: ['./src/shared'],
-          services: ['./src/services'],
         }
       }
     },
     sourcemap: true,
-    minify: 'terser',
+    minify: 'esbuild',
     target: 'es2020'
   },
   server: {

@@ -27,10 +27,17 @@ export const API_ENDPOINTS = {
 export const QUERY_KEYS = {
   USERS: ['users'],
   USER: (id: string) => ['user', id],
+  USER_ORDERS: ['user-orders'],
   PRODUCTS: ['products'],
   PRODUCT: (id: string) => ['product', id],
+  PRODUCT_CATEGORIES: ['product-categories'],
+  PRODUCT_BRANDS: ['product-brands'],
+  POPULAR_PRODUCTS: ['popular-products'],
+  RECOMMENDED_PRODUCTS: ['recommended-products'],
   ORDERS: ['orders'],
   ORDER: (id: string) => ['order', id],
+  ORDER_SUMMARY: ['order-summary'],
+  ORDER_TRACKING: ['order-tracking'],
   AUTH: {
     ME: ['auth', 'me'],
   },

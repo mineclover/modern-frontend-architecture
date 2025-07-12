@@ -3,7 +3,8 @@ import { clsx } from 'clsx'
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost'
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'sm' | 'md' | 'lg' | 'small' | 'large'
+  fullWidth?: boolean
   loading?: boolean
   children: React.ReactNode
 }
@@ -12,6 +13,7 @@ export const Button: React.FC<ButtonProps> = ({
   variant = 'primary',
   size = 'md',
   loading = false,
+  fullWidth = false,
   className,
   children,
   disabled,
@@ -28,8 +30,10 @@ export const Button: React.FC<ButtonProps> = ({
   
   const sizeClasses = {
     sm: 'px-3 py-1.5 text-sm',
+    small: 'px-3 py-1.5 text-sm',
     md: 'px-4 py-2 text-base',
     lg: 'px-6 py-3 text-lg',
+    large: 'px-6 py-3 text-lg',
   }
 
   return (
@@ -38,6 +42,7 @@ export const Button: React.FC<ButtonProps> = ({
         baseClasses,
         variantClasses[variant],
         sizeClasses[size],
+        fullWidth && 'w-full',
         (disabled || loading) && 'opacity-50 cursor-not-allowed',
         className
       )}
