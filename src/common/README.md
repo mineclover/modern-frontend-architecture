@@ -6,198 +6,121 @@
 
 Common 레이어는 아키텍처의 **최하위 기반 레이어**로, 다음과 같은 역할을 담당합니다:
 
-- **순수 JavaScript/TypeScript 유틸리티 함수** 제공
-- **프레임워크 독립적인 헬퍼 함수** 제공
-- **기본 타입 정의와 상수** 제공
-- **프로젝트 전반에서 재사용 가능한 도구** 제공
+- **순수 함수 및 유틸리티** - 부작용이 없는 재사용 가능한 함수들
+- **프레임워크 독립적 도구** - 특정 UI 프레임워크에 의존하지 않는 범용 함수
+- **기본 타입 정의** - 애플리케이션 전반에서 사용되는 공통 타입
+- **범용 상수** - 비즈니스 로직과 무관한 기술적 상수들
 
-## 📦 포함되는 내용
+## 📦 레이어 구성 요소
 
 ### `/types`
-```typescript
-// 프레임워크 독립적인 기본 타입들
-export interface ApiResponse<T> {
-  data: T;
-  status: number;
-  message: string;
-}
-
-export type SortOrder = 'asc' | 'desc';
-export type LoadingState = 'idle' | 'loading' | 'success' | 'error';
-```
+**목적**: 프레임워크와 도메인에 독립적인 기본 타입 정의
+- API 응답 형태, 정렬 옵션, 로딩 상태 등 범용 타입
+- 제네릭 타입 정의 및 유틸리티 타입
+- 프리미티브 타입의 확장 및 조합
 
 ### `/utils`
-```typescript
-// 순수 함수들 (외부 의존성 없음)
-export const arrayTool = {
-  unique: <T>(arr: T[]): T[] => [...new Set(arr)],
-  groupBy: <T>(arr: T[], key: keyof T) => { /* ... */ }
-};
-
-export const formatters = {
-  currency: (amount: number) => `$${amount.toFixed(2)}`,
-  date: (date: Date) => date.toISOString().split('T')[0]
-};
-```
+**목적**: 순수 함수 기반의 유틸리티 제공
+- 배열, 객체, 문자열 조작 함수
+- 데이터 변환 및 포맷팅 함수
+- 수학적 계산 및 검증 함수
+- 입출력이 예측 가능한 순수 함수들
 
 ### `/constants`
-```typescript
-// 애플리케이션 전반에서 사용하는 상수들
-export const HTTP_STATUS = {
-  OK: 200,
-  CREATED: 201,
-  BAD_REQUEST: 400,
-  UNAUTHORIZED: 401,
-  NOT_FOUND: 404,
-  INTERNAL_SERVER_ERROR: 500
-} as const;
+**목적**: 애플리케이션 전반에서 사용되는 기술적 상수
+- HTTP 상태 코드, 에러 코드
+- 정규 표현식 패턴
+- 크기, 제한값 등의 기술적 설정값
 
-export const VALIDATION_RULES = {
-  EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-  PASSWORD_MIN_LENGTH: 8
-} as const;
-```
-
-### `/react` (React 관련 공통 유틸리티)
-```typescript
-// React 전용 커스텀 훅들 (하지만 도메인 로직 없음)
-export const useDebounce = <T>(value: T, delay: number): T => {
-  // 디바운스 로직
-};
-
-export const useResize = () => {
-  // 윈도우 리사이즈 감지 로직
-};
-```
+### `/react` (선택적)
+**목적**: React 관련 범용 유틸리티 (도메인 로직 제외)
+- 디바운스, 쓰로틀링 등 성능 관련 훅
+- 브라우저 API 추상화 훅
+- 상태 관리와 무관한 UI 동작 훅
 
 ## 🔒 의존성 규칙
 
 ### ✅ 허용되는 의존성
-- **내부 모듈**: `common` 내의 다른 모듈
-- **외부 라이브러리**: `lodash`, `date-fns` 등 순수 유틸리티 라이브러리
-- **React**: React 관련 유틸리티의 경우에만
+- **내부 모듈**: Common 레이어 내의 다른 모듈
+- **순수 유틸리티 라이브러리**: lodash, date-fns, ramda 등
+- **최소한의 UI 프레임워크**: React 관련 유틸리티의 경우에만
 
 ### ❌ 금지되는 의존성
-- **상위 레이어**: `global`, `services`, `shared`, `domain`, `feature`, `routes`
-- **도메인 로직**: 비즈니스 로직이나 도메인 특화 코드
-- **HTTP 클라이언트**: API 호출 관련 코드
-- **상태 관리**: Redux, Zustand 등
+- **상위 레이어**: Global, Services, Shared, Domain, Feature, Routes
+- **비즈니스 로직**: 도메인 특화 로직이나 업무 규칙
+- **외부 시스템**: API 클라이언트, 데이터베이스 연결
+- **상태 관리**: 전역 상태 관리 라이브러리
 
-## 🏗️ 폴더 구조
+## 🏗️ 권장 폴더 구조
 
 ```
 src/common/
 ├── index.ts              # Public API 정의
-├── README.md            # 이 문서
-├── types/
-│   ├── index.ts         # 기본 타입들 export
-│   └── common.ts        # 공통 타입 정의
-├── utils/
-│   ├── index.ts         # 유틸리티 함수들 export
-│   ├── arrayTool.ts     # 배열 관련 도구
-│   ├── stringTool.ts    # 문자열 관련 도구
-│   └── validationTool.ts # 검증 관련 도구
-├── constants/
-│   ├── index.ts         # 상수들 export
-│   ├── httpStatus.ts    # HTTP 상태 코드
-│   └── validation.ts    # 검증 규칙
-└── react/               # React 전용 유틸리티
-    ├── useDebounce.ts   # 디바운스 훅
-    ├── useResize.ts     # 리사이즈 훅
-    └── useDebounceEffect.ts # 디바운스 이펙트 훅
+├── README.md            # 레이어 가이드 문서
+├── types/               # 공통 타입 정의
+├── utils/               # 순수 함수 유틸리티
+├── constants/           # 기술적 상수
+└── [framework]/         # 프레임워크별 유틸리티 (선택적)
 ```
 
-## 📝 사용 예시
+## 📝 설계 원칙
 
-### 다른 레이어에서 사용
-```typescript
-// ✅ 모든 레이어에서 사용 가능
-import { arrayTool, HTTP_STATUS, ApiResponse } from '@/common';
+### 순수성 원칙
+- 모든 함수는 동일한 입력에 대해 동일한 출력을 보장
+- 부작용(side effect) 없는 함수만 포함
+- 외부 상태에 의존하지 않는 독립적인 동작
 
-// services layer에서 사용
-const processUserData = (users: User[]): User[] => {
-  return arrayTool.unique(users);
-};
+### 재사용성 원칙
+- 특정 도메인에 종속되지 않는 범용적 기능
+- 다양한 컨텍스트에서 활용 가능한 추상화 수준
+- 설정이나 커스터마이징이 가능한 유연한 구조
 
-// domain layer에서 사용
-const validateEmail = (email: string): boolean => {
-  return VALIDATION_RULES.EMAIL_REGEX.test(email);
-};
-```
+### 안정성 원칙
+- 변경 빈도가 낮은 안정적인 기능들
+- 하위 호환성을 고려한 API 설계
+- 의존성 변경이 상위 레이어에 영향을 주지 않음
 
-### Public API 패턴
-```typescript
-// src/common/index.ts
-export * from './types';
-export * from './utils';
-export * from './constants';
-export * from './react';
-
-// 사용하는 곳에서
-import { arrayTool, useDebounce, HTTP_STATUS } from '@/common';
-```
-
-## ⚠️ 주의사항
+## ⚠️ 주의사항과 안티패턴
 
 ### 금지사항
 1. **도메인 로직 포함 금지**
-   ```typescript
-   // ❌ 금지: 도메인 특화 로직
-   export const calculateUserDiscount = (user: User) => { /* ... */ }
-   
-   // ✅ 올바름: 범용 계산 함수
-   export const calculatePercentage = (value: number, total: number) => { /* ... */ }
-   ```
+   - 특정 비즈니스 규칙이나 업무 로직 구현
+   - 사용자, 주문, 상품 등 도메인 개념에 종속적인 함수
 
-2. **상위 레이어 import 금지**
-   ```typescript
-   // ❌ 금지
-   import { UserService } from '@/services/user';
-   import { useUserStore } from '@/shared/store';
-   
-   // ✅ 올바름
-   import { debounce } from 'lodash';
-   ```
+2. **상위 레이어 의존성 금지**
+   - 서비스, 컴포넌트, 상태 관리 모듈 참조
+   - API 엔드포인트나 외부 시스템 연결
 
 3. **부작용 있는 코드 금지**
-   ```typescript
-   // ❌ 금지: API 호출, 로컬스토리지 접근 등
-   export const fetchData = () => fetch('/api/data');
-   
-   // ✅ 올바름: 순수 함수
-   export const formatData = (data: any[]) => data.map(item => ({ ...item }));
-   ```
+   - 네트워크 요청, 파일 시스템 접근
+   - 전역 상태 변경, DOM 조작
+   - 로컬스토리지나 세션스토리지 직접 접근
 
-## 🧪 테스트 가이드
+### 올바른 추상화 수준
+- **너무 구체적**: 특정 도메인에만 유용한 함수
+- **너무 추상적**: 실제 사용하기 어려운 과도한 일반화
+- **적절한 수준**: 여러 컨텍스트에서 유용하면서도 명확한 목적
 
-### 테스트 작성 원칙
-```typescript
-// arrayTool.test.ts
-describe('arrayTool', () => {
-  describe('unique', () => {
-    it('should remove duplicate values', () => {
-      const input = [1, 2, 2, 3, 3, 3];
-      const expected = [1, 2, 3];
-      expect(arrayTool.unique(input)).toEqual(expected);
-    });
-  });
-});
-```
+## 🧪 품질 관리
 
-### 테스트 실행
-```bash
-# Common 레이어만 테스트
-npm run test src/common
+### 테스트 전략
+- **단위 테스트**: 모든 공개 함수에 대한 완전한 테스트
+- **순수성 검증**: 동일 입력에 대한 동일 출력 보장
+- **경계값 테스트**: 극단적인 입력값에 대한 동작 검증
 
-# 특정 파일 테스트
-npm run test src/common/utils/arrayTool.test.ts
-```
+### 품질 지표
+- **테스트 커버리지**: 95% 이상
+- **순수 함수 비율**: 100%
+- **외부 의존성**: 최소화
+- **성능**: 고빈도 사용 함수의 최적화
 
-## 📈 품질 지표
+## 🎯 성공 기준
 
-- **테스트 커버리지**: 90% 이상 유지
-- **순수 함수 비율**: 100% (부작용 없는 함수만)
-- **의존성 개수**: 최소한으로 유지
-- **번들 크기**: 경량 유지 (트리 셰이킹 최적화)
+이 레이어가 성공적으로 설계되었다면:
 
-이 레이어는 전체 아키텍처의 **안정적인 기반**을 제공합니다. 변경 시에는 전체 애플리케이션에 영향을 줄 수 있으므로 신중하게 접근해야 합니다.
+1. **재사용률이 높음**: 여러 상위 레이어에서 광범위하게 사용
+2. **변경 빈도가 낮음**: 안정적이고 성숙한 API 제공
+3. **테스트가 쉬움**: 순수 함수로 인한 예측 가능한 동작
+4. **의존성이 최소**: 외부 라이브러리에 대한 제한적 의존
+
+이 레이어는 전체 아키텍처의 **신뢰할 수 있는 기반**이 되어야 합니다.

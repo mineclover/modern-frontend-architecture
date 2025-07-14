@@ -4,604 +4,157 @@
 
 ## 🎯 역할과 책임
 
-Domain 레이어는 **비즈니스 도메인별로 캡슐화된 기능**을 제공하는 레이어로, 다음과 같은 역할을 담당합니다:
+Domain 레이어는 **비즈니스 핵심 영역별로 격리된 기능**을 제공하는 레이어로, 다음과 같은 역할을 담당합니다:
 
-- **도메인별 비즈니스 로직** 구현 (User, Product, Order 등)
-- **도메인 특화 UI 컴포넌트** 제공
-- **도메인별 API 호출 로직** 관리
-- **도메인별 상태 관리** (React Query, Zustand 등)
-- **도메인별 타입 정의** 및 검증 로직
+- **도메인 모델링** - 비즈니스 개념과 규칙의 코드 표현
+- **비즈니스 로직 캡슐화** - 도메인별 업무 규칙과 정책 구현
+- **도메인 특화 UI** - 해당 영역에 최적화된 사용자 인터페이스
+- **도메인 경계 관리** - 명확한 책임 분리와 인터페이스 정의
 
-## 📦 포함되는 내용
+## 📦 레이어 구성 요소
 
-### 도메인 구조 (예: `/user`)
-```
-src/domain/user/
-├── index.ts              # Public API (외부 노출 인터페이스)
-├── README.md            # 도메인별 가이드
-├── types/
-│   ├── index.ts         # 타입들 export
-│   └── user.ts          # User 관련 타입 정의
-├── api/
-│   ├── index.ts         # API 함수들 export
-│   └── userApi.ts       # User API 호출 함수들
-├── hooks/
-│   ├── index.ts         # 훅들 export
-│   ├── useUser.ts       # 단일 사용자 관리 훅
-│   ├── useUserList.ts   # 사용자 목록 관리 훅
-│   └── useUserActions.ts # 사용자 액션 훅
-├── components/
-│   ├── index.ts         # 컴포넌트들 export
-│   ├── UserCard.tsx     # 사용자 카드 컴포넌트
-│   ├── UserForm.tsx     # 사용자 폼 컴포넌트
-│   ├── UserList.tsx     # 사용자 목록 컴포넌트
-│   └── UserProfile.tsx  # 사용자 프로필 컴포넌트
-├── store/
-│   ├── index.ts         # 스토어 export
-│   └── userStore.ts     # 사용자 상태 관리
-├── utils/
-│   ├── index.ts         # 유틸리티 export
-│   └── userUtils.ts     # 사용자 관련 유틸리티
-└── constants/
-    ├── index.ts         # 상수들 export
-    └── userConstants.ts # 사용자 관련 상수
-```
+### 각 도메인별 모듈 구조
 
-### `/types` - 타입 정의
-```typescript
-// user.ts
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: UserRole;
-  avatar?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+#### `/types`
+**목적**: 도메인 개념과 비즈니스 엔티티 모델링
+- 핵심 비즈니스 엔티티 정의
+- 도메인별 값 객체와 열거형
+- 비즈니스 규칙이 반영된 타입 제약
+- 도메인 간 인터페이스 계약
 
-export type UserRole = 'admin' | 'user' | 'guest';
+#### `/api`
+**목적**: 도메인별 데이터 액세스 추상화
+- RESTful API 호출 래핑
+- 도메인 모델과 API 응답 간 변환
+- 에러 처리와 재시도 로직
+- 캐싱 전략과 최적화
 
-export interface CreateUserRequest {
-  email: string;
-  name: string;
-  password: string;
-  role?: UserRole;
-}
+#### `/hooks`
+**목적**: 도메인별 상태 관리와 비즈니스 로직
+- React Query 기반 서버 상태 관리
+- 도메인별 비즈니스 규칙 구현
+- 복합적인 상태 변화 오케스트레이션
+- 사이드 이펙트 관리
 
-export interface UpdateUserRequest {
-  name?: string;
-  email?: string;
-  avatar?: string;
-}
+#### `/components`
+**목적**: 도메인에 특화된 UI 컴포넌트
+- 비즈니스 개념을 반영한 UI 요소
+- 도메인별 워크플로우 구현
+- 복잡한 상호작용 패턴
+- 도메인 전용 폼과 뷰
 
-export interface UserListQuery {
-  page?: number;
-  limit?: number;
-  search?: string;
-  role?: UserRole;
-  sortBy?: 'name' | 'email' | 'createdAt';
-  sortOrder?: 'asc' | 'desc';
-}
-```
+#### `/store` (선택적)
+**목적**: 도메인별 클라이언트 상태 관리
+- 복잡한 도메인 상태 관리
+- 로컬 비즈니스 규칙 적용
+- 옵티미스틱 업데이트
+- 오프라인 상태 처리
 
-### `/api` - API 호출 함수
-```typescript
-// userApi.ts
-import { httpClient } from '@/services/http';
-import type { User, CreateUserRequest, UpdateUserRequest, UserListQuery } from '../types';
-
-export const userApi = {
-  // 사용자 목록 조회
-  getUsers: async (query: UserListQuery = {}): Promise<PaginatedResponse<User>> => {
-    const params = new URLSearchParams();
-    Object.entries(query).forEach(([key, value]) => {
-      if (value !== undefined) params.append(key, String(value));
-    });
-    
-    return httpClient.get<PaginatedResponse<User>>(`/users?${params}`);
-  },
-
-  // 사용자 상세 조회
-  getUser: async (id: string): Promise<User> => {
-    return httpClient.get<User>(`/users/${id}`);
-  },
-
-  // 사용자 생성
-  createUser: async (userData: CreateUserRequest): Promise<User> => {
-    return httpClient.post<User>('/users', userData);
-  },
-
-  // 사용자 수정
-  updateUser: async (id: string, userData: UpdateUserRequest): Promise<User> => {
-    return httpClient.put<User>(`/users/${id}`, userData);
-  },
-
-  // 사용자 삭제
-  deleteUser: async (id: string): Promise<void> => {
-    return httpClient.delete(`/users/${id}`);
-  },
-
-  // 사용자 검색
-  searchUsers: async (query: string): Promise<User[]> => {
-    return httpClient.get<User[]>(`/users/search?q=${encodeURIComponent(query)}`);
-  }
-};
-```
-
-### `/hooks` - React Query 훅
-```typescript
-// useUser.ts
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { userApi } from '../api';
-import type { User, CreateUserRequest, UpdateUserRequest } from '../types';
-
-// 사용자 조회 훅
-export const useUser = (id: string) => {
-  return useQuery({
-    queryKey: ['user', id],
-    queryFn: () => userApi.getUser(id),
-    enabled: !!id,
-    staleTime: 5 * 60 * 1000, // 5분
-  });
-};
-
-// 사용자 생성 훅
-export const useCreateUser = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (userData: CreateUserRequest) => userApi.createUser(userData),
-    onSuccess: (newUser) => {
-      // 사용자 목록 캐시 무효화
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      
-      // 새 사용자를 캐시에 직접 추가
-      queryClient.setQueryData(['user', newUser.id], newUser);
-      
-      // 성공 알림
-      notificationService.showToast('사용자가 성공적으로 생성되었습니다.', 'success');
-    },
-    onError: (error: Error) => {
-      notificationService.showToast(error.message, 'error');
-    }
-  });
-};
-
-// 사용자 수정 훅
-export const useUpdateUser = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ id, userData }: { id: string; userData: UpdateUserRequest }) =>
-      userApi.updateUser(id, userData),
-    onSuccess: (updatedUser) => {
-      // 해당 사용자 캐시 업데이트
-      queryClient.setQueryData(['user', updatedUser.id], updatedUser);
-      
-      // 사용자 목록 캐시 업데이트
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      
-      notificationService.showToast('사용자 정보가 업데이트되었습니다.', 'success');
-    },
-    onError: (error: Error) => {
-      notificationService.showToast(error.message, 'error');
-    }
-  });
-};
-```
-
-### `/components` - 도메인 특화 컴포넌트
-```typescript
-// UserCard.tsx
-import { Card, Button } from '@/shared/components';
-import type { User } from '../types';
-
-interface UserCardProps {
-  user: User;
-  onEdit?: (user: User) => void;
-  onDelete?: (user: User) => void;
-  showActions?: boolean;
-}
-
-export const UserCard = ({ 
-  user, 
-  onEdit, 
-  onDelete, 
-  showActions = true 
-}: UserCardProps) => {
-  const handleEdit = () => onEdit?.(user);
-  const handleDelete = () => onDelete?.(user);
-
-  return (
-    <Card className="p-4">
-      <div className="flex items-center space-x-4">
-        <div className="flex-shrink-0">
-          <img
-            src={user.avatar || '/default-avatar.png'}
-            alt={user.name}
-            className="w-12 h-12 rounded-full"
-          />
-        </div>
-        
-        <div className="flex-1 min-w-0">
-          <h3 className="text-lg font-medium text-gray-900 truncate">
-            {user.name}
-          </h3>
-          <p className="text-sm text-gray-500 truncate">
-            {user.email}
-          </p>
-          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-            user.role === 'admin' 
-              ? 'bg-red-100 text-red-800'
-              : user.role === 'user'
-              ? 'bg-green-100 text-green-800'  
-              : 'bg-gray-100 text-gray-800'
-          }`}>
-            {user.role}
-          </span>
-        </div>
-
-        {showActions && (
-          <div className="flex space-x-2">
-            <Button variant="secondary" size="sm" onClick={handleEdit}>
-              수정
-            </Button>
-            <Button variant="danger" size="sm" onClick={handleDelete}>
-              삭제
-            </Button>
-          </div>
-        )}
-      </div>
-    </Card>
-  );
-};
-
-// UserForm.tsx
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Input, Button } from '@/shared/components';
-import { userValidationSchema } from '../utils/validation';
-import type { CreateUserRequest, UpdateUserRequest } from '../types';
-
-interface UserFormProps {
-  user?: User;
-  onSubmit: (data: CreateUserRequest | UpdateUserRequest) => void;
-  onCancel: () => void;
-  isLoading?: boolean;
-}
-
-export const UserForm = ({ user, onSubmit, onCancel, isLoading }: UserFormProps) => {
-  const isEditing = !!user;
-  
-  const {
-    register,
-    handleSubmit,
-    formState: { errors }
-  } = useForm({
-    resolver: zodResolver(userValidationSchema),
-    defaultValues: user ? {
-      name: user.name,
-      email: user.email,
-      role: user.role
-    } : {
-      name: '',
-      email: '',
-      password: '',
-      role: 'user' as const
-    }
-  });
-
-  return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <Input
-        label="이름"
-        {...register('name')}
-        error={errors.name?.message}
-      />
-      
-      <Input
-        label="이메일"
-        type="email"
-        {...register('email')}
-        error={errors.email?.message}
-      />
-      
-      {!isEditing && (
-        <Input
-          label="비밀번호"
-          type="password"
-          {...register('password')}
-          error={errors.password?.message}
-        />
-      )}
-      
-      <select
-        {...register('role')}
-        className="block w-full px-3 py-2 border border-gray-300 rounded-md"
-      >
-        <option value="user">사용자</option>
-        <option value="admin">관리자</option>
-        <option value="guest">게스트</option>
-      </select>
-
-      <div className="flex space-x-2">
-        <Button 
-          type="submit" 
-          disabled={isLoading}
-          variant="primary"
-        >
-          {isLoading ? '저장 중...' : isEditing ? '수정' : '생성'}
-        </Button>
-        <Button 
-          type="button" 
-          onClick={onCancel}
-          variant="secondary"
-        >
-          취소
-        </Button>
-      </div>
-    </form>
-  );
-};
-```
+#### `/utils`
+**목적**: 도메인별 유틸리티와 헬퍼 함수
+- 비즈니스 계산 및 변환 로직
+- 도메인별 검증 규칙
+- 포맷팅과 파싱 함수
+- 도메인 특화 알고리즘
 
 ## 🔒 의존성 규칙
 
 ### ✅ 허용되는 의존성
-- **하위 레이어**: `common`, `global`, `services`, `shared`
-- **상태 관리**: React Query, Zustand
-- **폼 관리**: React Hook Form, Zod
-- **같은 도메인 내부**: 도메인 내의 다른 모듈들
+- **하위 레이어**: Common, Global, Services, Shared
+- **같은 도메인 내부**: 동일 도메인의 다른 모듈
+- **상태 관리**: React Query, Zustand 등
+- **도메인 라이브러리**: 비즈니스 로직 관련 특화 라이브러리
 
 ### ❌ 금지되는 의존성
-- **상위 레이어**: `feature`, `routes`
+- **상위 레이어**: Feature, Routes
 - **다른 도메인**: 다른 도메인의 내부 구현 (Public API만 허용)
-- **UI 프레임워크**: 특정 UI 라이브러리에 강하게 결합
+- **라우팅**: 페이지 네비게이션이나 URL 관리
 
-## 📝 Public API 패턴
+## 🏗️ 권장 폴더 구조
 
-### 도메인의 index.ts
-```typescript
-// src/domain/user/index.ts
-// Public API - 외부에서 접근 가능한 것들만 export
-
-// Types
-export type { User, UserRole, CreateUserRequest, UpdateUserRequest } from './types';
-
-// API
-export { userApi } from './api';
-
-// Hooks
-export { 
-  useUser, 
-  useUserList, 
-  useCreateUser, 
-  useUpdateUser, 
-  useDeleteUser 
-} from './hooks';
-
-// Components
-export { 
-  UserCard, 
-  UserForm, 
-  UserList, 
-  UserProfile 
-} from './components';
-
-// Utils (필요한 경우만)
-export { validateUserEmail } from './utils';
-
-// Constants (필요한 경우만)
-export { USER_ROLES } from './constants';
-
-// ❌ 내부 구현은 export하지 않음
-// export { InternalUserComponent } from './components/InternalUserComponent';
+```
+src/domain/
+├── [domain-name]/        # 각 비즈니스 도메인
+│   ├── index.ts          # Public API 정의
+│   ├── README.md         # 도메인별 가이드
+│   ├── types/            # 도메인 타입과 모델
+│   ├── api/              # 데이터 액세스
+│   ├── hooks/            # 상태 관리와 비즈니스 로직
+│   ├── components/       # 도메인 특화 UI
+│   ├── store/            # 클라이언트 상태 (선택적)
+│   ├── utils/            # 도메인 유틸리티
+│   └── constants/        # 도메인 상수
+└── README.md            # 도메인 레이어 가이드
 ```
 
-### 다른 레이어에서 사용
-```typescript
-// ✅ 올바른 사용: Public API 통해서만 접근
-import { User, UserCard, useUser } from '@/domain/user';
+## 📝 설계 원칙
 
-// ❌ 금지: 내부 구현 직접 접근
-import { UserCard } from '@/domain/user/components/UserCard';
-import { userValidationSchema } from '@/domain/user/utils/validation';
-```
+### 도메인 주도 설계 (DDD)
+- **유비쿼터스 언어**: 비즈니스와 개발팀이 공유하는 용어
+- **경계된 컨텍스트**: 명확한 도메인 경계와 책임
+- **집합체 패턴**: 관련된 엔티티들의 일관성 보장
 
-## 🔄 도메인 간 통신
+### 캡슐화와 정보 은닉
+- **Public API 패턴**: 외부에는 필요한 인터페이스만 노출
+- **내부 구현 숨김**: 구현 세부사항의 변경이 외부에 영향 없음
+- **명확한 계약**: 도메인 간 상호작용의 명시적 정의
 
-### 도메인 간 데이터 공유가 필요한 경우
-```typescript
-// ❌ 금지: 직접 의존성
-import { Product } from '@/domain/product'; // user 도메인에서
+### 비즈니스 로직 중심
+- **핵심 로직 보호**: 외부 기술 변화에 영향받지 않는 비즈니스 규칙
+- **도메인 무결성**: 비즈니스 규칙의 일관된 적용
+- **테스트 가능성**: 비즈니스 로직의 독립적 검증
 
-// ✅ 방법 1: Shared Types 사용
-import { ProductReference } from '@/shared/types';
-
-interface User {
-  id: string;
-  favoriteProducts: ProductReference[]; // 전체 Product 객체가 아닌 참조만
-}
-
-// ✅ 방법 2: API 호출로 필요시 데이터 가져오기
-const UserProfile = ({ userId }: { userId: string }) => {
-  const { data: user } = useUser(userId);
-  const { data: favoriteProducts } = useQuery({
-    queryKey: ['user-favorite-products', userId],
-    queryFn: () => productApi.getProductsByIds(user?.favoriteProductIds || []),
-    enabled: !!user?.favoriteProductIds?.length
-  });
-
-  return (
-    <div>
-      <h1>{user?.name}</h1>
-      <FavoriteProductsList products={favoriteProducts} />
-    </div>
-  );
-};
-
-// ✅ 방법 3: Events를 통한 통신
-import { eventBus } from '@/services/eventBus';
-
-// User 도메인에서 이벤트 발생
-const handleUserUpdate = (user: User) => {
-  eventBus.emit('user:updated', { userId: user.id, userData: user });
-};
-
-// Product 도메인에서 이벤트 수신
-useEffect(() => {
-  const handleUserUpdate = ({ userId, userData }) => {
-    // 사용자 관련 제품 정보 업데이트
-    queryClient.invalidateQueries(['user-products', userId]);
-  };
-
-  eventBus.on('user:updated', handleUserUpdate);
-  return () => eventBus.off('user:updated', handleUserUpdate);
-}, []);
-```
-
-## ⚠️ 주의사항
+## ⚠️ 주의사항과 안티패턴
 
 ### 금지사항
-1. **다른 도메인 직접 의존 금지**
-   ```typescript
-   // ❌ 금지: user 도메인에서 product 도메인 직접 import
-   import { ProductCard } from '@/domain/product';
-   
-   // ✅ 올바름: API 호출로 필요한 데이터만 가져오기
-   const { data: products } = useQuery(['products'], productApi.getProducts);
-   ```
+1. **도메인 간 직접 의존성 금지**
+   - 다른 도메인의 내부 구현 직접 import
+   - 도메인 경계를 넘나드는 강한 결합
 
-2. **과도한 Public API 노출 금지**
-   ```typescript
-   // ❌ 금지: 내부 구현까지 모두 export
-   export * from './components'; // 모든 컴포넌트 노출
-   export * from './utils';      // 모든 유틸리티 노출
-   
-   // ✅ 올바름: 필요한 것만 명시적으로 export
-   export { UserCard, UserForm } from './components';
-   export { validateUserEmail } from './utils';
-   ```
+2. **기술적 관심사 침투 금지**
+   - 특정 UI 프레임워크에 종속적인 로직
+   - 인프라 기술의 도메인 로직 침투
 
-3. **비즈니스 로직을 컴포넌트에 집중시키지 않기**
-   ```typescript
-   // ❌ 금지: 컴포넌트에 비즈니스 로직 집중
-   const UserCard = ({ user }) => {
-     const calculateUserScore = () => {
-       // 복잡한 점수 계산 로직
-     };
-     
-     const validateUserData = () => {
-       // 복잡한 검증 로직
-     };
-     
-     // ... JSX
-   };
-   
-   // ✅ 올바름: 로직을 별도 모듈로 분리
-   const UserCard = ({ user }) => {
-     const score = userUtils.calculateScore(user);
-     const isValid = userUtils.validateUser(user);
-     
-     // ... JSX
-   };
-   ```
+3. **과도한 도메인 분할 금지**
+   - 의미없는 작은 도메인 생성
+   - 관련성 높은 개념들의 인위적 분리
 
-## 🧪 테스트 가이드
+### 올바른 도메인 경계
+- **응집성**: 관련된 비즈니스 개념들의 그룹화
+- **자율성**: 다른 도메인에 최소한의 의존성
+- **명확성**: 도메인의 목적과 책임이 분명
 
-### API 테스트
-```typescript
-// userApi.test.ts
-describe('userApi', () => {
-  beforeEach(() => {
-    fetchMock.resetMocks();
-  });
+## 🧪 품질 관리
 
-  it('should fetch user by id', async () => {
-    const mockUser = { id: '1', name: 'John', email: 'john@example.com' };
-    fetchMock.mockResponseOnce(JSON.stringify(mockUser));
+### 테스트 전략
+- **도메인 로직 테스트**: 비즈니스 규칙의 철저한 검증
+- **통합 테스트**: API와 상태 관리의 연동 테스트
+- **컴포넌트 테스트**: 도메인 UI의 시나리오 기반 테스트
 
-    const user = await userApi.getUser('1');
+### 도메인 모델 검증
+- **유비쿼터스 언어 일관성**: 코드와 비즈니스 용어의 일치
+- **비즈니스 규칙 완전성**: 모든 업무 규칙의 코드 반영
+- **도메인 전문가 리뷰**: 비즈니스 이해관계자의 검증
 
-    expect(user).toEqual(mockUser);
-    expect(fetch).toHaveBeenCalledWith('/api/users/1');
-  });
-});
-```
+## 🔄 도메인 간 상호작용
 
-### Hook 테스트
-```typescript
-// useUser.test.ts
-describe('useUser', () => {
-  it('should fetch user data', async () => {
-    const mockUser = { id: '1', name: 'John' };
-    
-    const { result } = renderHook(() => useUser('1'), {
-      wrapper: QueryClientProvider
-    });
+### 허용되는 상호작용 방식
+1. **API 호출**: 다른 도메인의 Public API 사용
+2. **이벤트 기반**: 도메인 이벤트를 통한 느슨한 결합
+3. **공유 타입**: Shared 레이어의 공통 타입 활용
 
-    await waitFor(() => {
-      expect(result.current.data).toEqual(mockUser);
-      expect(result.current.isLoading).toBe(false);
-    });
-  });
-});
-```
+### 금지되는 상호작용
+- 다른 도메인의 내부 구현 직접 접근
+- 도메인 간 상태 공유
+- 순환 의존성 생성
 
-### 컴포넌트 테스트
-```typescript
-// UserCard.test.tsx
-describe('UserCard', () => {
-  const mockUser = {
-    id: '1',
-    name: 'John Doe',
-    email: 'john@example.com',
-    role: 'user' as const
-  };
+## 🎯 성공 기준
 
-  it('should render user information', () => {
-    render(<UserCard user={mockUser} />);
+이 레이어가 성공적으로 설계되었다면:
 
-    expect(screen.getByText('John Doe')).toBeInTheDocument();
-    expect(screen.getByText('john@example.com')).toBeInTheDocument();
-    expect(screen.getByText('user')).toBeInTheDocument();
-  });
+1. **비즈니스 로직 집중**: 핵심 업무 규칙이 명확히 구현
+2. **도메인 경계 명확**: 각 도메인의 책임과 범위가 분명
+3. **변경 용이성**: 비즈니스 요구사항 변화에 유연한 대응
+4. **테스트 가능성**: 비즈니스 로직의 독립적 검증 가능
 
-  it('should call onEdit when edit button is clicked', () => {
-    const handleEdit = jest.fn();
-    render(<UserCard user={mockUser} onEdit={handleEdit} />);
-
-    fireEvent.click(screen.getByText('수정'));
-    expect(handleEdit).toHaveBeenCalledWith(mockUser);
-  });
-});
-```
-
-## 📈 성능 최적화
-
-### 데이터 캐싱 전략
-```typescript
-// useUser.ts with advanced caching
-export const useUser = (id: string) => {
-  return useQuery({
-    queryKey: ['user', id],
-    queryFn: () => userApi.getUser(id),
-    enabled: !!id,
-    staleTime: 5 * 60 * 1000,    // 5분간 fresh
-    cacheTime: 30 * 60 * 1000,   // 30분간 캐시 유지
-    retry: 3,                     // 3번 재시도
-    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
-  });
-};
-```
-
-### 지연 로딩
-```typescript
-// components/index.ts
-export const UserCard = lazy(() => import('./UserCard'));
-export const UserForm = lazy(() => import('./UserForm'));
-export const UserProfile = lazy(() => import('./UserProfile'));
-```
-
-이 레이어는 **비즈니스 도메인별로 캡슐화된 기능**을 제공하여 높은 응집도와 낮은 결합도를 달성합니다.
+이 레이어는 **비즈니스 가치 창출의 핵심**이 되어야 합니다.
